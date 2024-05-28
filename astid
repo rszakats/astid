@@ -1,0 +1,42 @@
+#!/bin/bash
+
+header="Des'n     H     G   Epoch     M        Peri.      Node       Incl.       e            n           a      U Reference #Obs #Opp    Arc    rms  Perts   Computer   flag Designation                 Date    "
+tdir="/tmp/${USER}"
+link="https://www.minorplanetcenter.net/iau/MPCORB/MPCORB.DAT.gz"
+datafile="MPCORB.DAT"
+
+mkdir -p ${tdir}
+mkdir -p "/home/${USER}/.cache/"
+
+if [ ! -f "/home/${USER}/.cache/${datafile}.gz" ];then
+    echo "Downloading ${datafile}."
+    wget -q ${link} -O ${tdir}/${datafile}.gz
+    echo "${header}" > ${tdir}/${datafile}
+    zcat /tmp/rszakats/MPCORB.DAT.gz | awk 'NR>43{print $0}' >> ${tdir}/${datafile}
+    gzip -c ${tdir}/${datafile} > /home/${USER}/.cache/${datafile}.gz
+fi
+
+awk -v aname="$1" -v header="${header}" '
+BEGIN { 
+   # FIELDWIDTHS="9 6 5 6 11 11 11 11 10 12 2 9 4 9 6 5 10 5 8 11 5 28 8"
+  FIELDWIDTHS="8 7 5 6 11 11 11 11 10 12 12 2 11 5 4 10 5 9 8 8 28 8" 
+  n=split(header, headers)
+}
+
+NR == 1 {
+  for (i=1; i<=NF; i++) {
+    gsub(/ /, "", $i)  # Remove spaces from header names
+    f[$i] = i
+  }
+}
+
+NR > 1 {
+  for (i=0; i<NF; i++) {
+    fields[NR][i] = $(i+1)
+    print headers[i+1]": "fields[NR][i] 
+  }
+  print "-----------------------"
+}
+
+' <<< $(echo "${header}" &&zcat "/home/${USER}/.cache/${datafile}.gz" |  grep $1) | column -t
+# echo -e "${header}\n" &&zcat "/home/${USER}/.cache/${datafile}.gz" |  grep $2
