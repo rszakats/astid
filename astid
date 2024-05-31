@@ -1,5 +1,30 @@
 #!/bin/bash
 
+##################################################################
+# Checks the availability of the used commands
+red="\033[1;31m\e[5m"
+green="\033[1;32m"
+yellow="\e[33m"
+normal="\033[0m"
+bold='\033[1m'
+
+check_command () {
+   args=($@)
+   command -v "${args[0]}" >/dev/null 2>&1 || { echo -e >&2 "${red}Error! The script requires ${bold}${green}"${args[0]}"${normal}${red} but it's not installed. Aborting.${normal}"; exit 1; }
+}
+export -f check_command
+##################################################################
+externals="wget zcat gzip awk column"
+for  ext in ${externals};do
+    check_command ${ext}
+done
+
+if [ -z "${1}" ];then
+  echo -e "${red}Missing argument!${normal} Please provide an asteroid name or provisional designation!\nPlease use \"\" in case of provisinal designations!\n"\
+  "E.g.:\nastid Ceres\nastid \"2021 CS10\""
+  exit 1
+fi
+
 header="Des'n     H     G   Epoch     M        Peri.      Node       Incl.       e            n           a      U Reference #Obs #Opp    Arc    rms  Perts   Computer   flag Designation                 Date    "
 tdir="/tmp/${USER}"
 link="https://www.minorplanetcenter.net/iau/MPCORB/MPCORB.DAT.gz"
@@ -38,5 +63,4 @@ NR > 1 {
   print "-----------------------"
 }
 
-' <<< $(echo "${header}" &&zcat "/home/${USER}/.cache/${datafile}.gz" |  grep $1) | column -t
-# echo -e "${header}\n" &&zcat "/home/${USER}/.cache/${datafile}.gz" |  grep $2
+' <<< $(echo "${header}" &&zcat "/home/${USER}/.cache/${datafile}.gz" |  grep -i "${1}") | column -t
