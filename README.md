@@ -3,5 +3,7 @@ A short script to get some basic information about an asteroid. The data is from
 
 ## Usage
 chmod +x astid
+
 ./astid Ceres
+
 ./astid "2021 CS10"
