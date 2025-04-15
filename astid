@@ -1,5 +1,13 @@
 #!/bin/bash
 
+set -eE -o functrace
+failure() {
+  local lineno=$1
+  local msg=$2
+  echo "Failed at line $lineno: $msg"
+}
+trap 'failure ${LINENO} "$BASH_COMMAND" ; exit 1' ERR
+
 ##################################################################
 # Checks the availability of the used commands
 red="\033[1;31m\e[5m"
@@ -41,6 +49,13 @@ if [ ! -f "/home/${USER}/.cache/${datafile}.gz" ];then
     gzip -c ${tdir}/${datafile} > /home/${USER}/.cache/${datafile}.gz
 fi
 
+if [[ "$1" =~ ^[0-9]+$ || "$1" =~ ^[-][0-9]+$  ]]
+then
+    target="(${1})"
+else
+    target=" ${1}"
+fi
+
 awk -v aname="$1" -v header="${header}" '
 BEGIN { 
    # FIELDWIDTHS="9 6 5 6 11 11 11 11 10 12 2 9 4 9 6 5 10 5 8 11 5 28 8"
@@ -63,4 +78,4 @@ NR > 1 {
   print "-----------------------"
 }
 
-' <<< $(echo "${header}" &&zcat "/home/${USER}/.cache/${datafile}.gz" |  grep -i "${1}") | column -t
+' <<< $(echo "${header}" &&zcat "/home/${USER}/.cache/${datafile}.gz" |  grep -i "${target}") | column -t
